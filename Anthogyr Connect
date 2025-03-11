@@ -1,1 +1,115 @@
-git clone https://github.com/Boubour834/preinscription-form.git
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import * as XLSX from "xlsx";
+
+export default function PreinscriptionForm() {
+  const [formData, setFormData] = useState({
+    nom: "",
+    prenom: "",
+    email: "",
+    telephone: "",
+    specialite: "",
+    autreSpecialite: "",
+    message: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  const specialites = [
+    "Omnipraticien Implanto",
+    "Omnipraticien",
+    "Prosthodontiste",
+    "GP Ortho",
+    "Implanto exclusif",
+    "Parodontiste",
+    "Endodontiste",
+    "Stomatologue",
+    "Pédodontiste",
+    "Laboratoire",
+    "Autre",
+  ];
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const ws = XLSX.utils.json_to_sheet([formData]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inscriptions");
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Inscriptions_Anthogyr_Connect.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      <Card className="max-w-lg w-full p-6 bg-white shadow-lg rounded-2xl">
+        <CardContent>
+          <h2 className="text-2xl font-bold mb-4 text-center">Pré-inscription - Anthogyr Connect</h2>
+          {!submitted ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="nom">Nom</Label>
+                <Input id="nom" name="nom" required value={formData.nom} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="prenom">Prénom</Label>
+                <Input id="prenom" name="prenom" required value={formData.prenom} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" required value={formData.email} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="telephone">Téléphone</Label>
+                <Input id="telephone" name="telephone" required value={formData.telephone} onChange={handleChange} />
+              </div>
+              <div>
+                <Label htmlFor="specialite">Spécialité</Label>
+                <select
+                  id="specialite"
+                  name="specialite"
+                  required
+                  value={formData.specialite}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Sélectionnez une spécialité</option>
+                  {specialites.map((specialite) => (
+                    <option key={specialite} value={specialite}>{specialite}</option>
+                  ))}
+                </select>
+              </div>
+              {formData.specialite === "Autre" && (
+                <div>
+                  <Label htmlFor="autreSpecialite">Précisez votre spécialité</Label>
+                  <Input id="autreSpecialite" name="autreSpecialite" value={formData.autreSpecialite} onChange={handleChange} />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="message">Message (optionnel)</Label>
+                <Textarea id="message" name="message" value={formData.message} onChange={handleChange} />
+              </div>
+              <Button type="submit" className="w-full">S'inscrire</Button>
+            </form>
+          ) : (
+            <p className="text-green-600 text-center">Merci pour votre inscription ! Le fichier Excel a été téléchargé.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
